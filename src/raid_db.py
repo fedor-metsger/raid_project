@@ -7,27 +7,6 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 Base = declarative_base()
 
 
-class FrameworkMod(Base):
-    """
-    Класс для работы с Издателем
-    """
-    __tablename__ = "framework"
-
-    pk = sq.Column(sq.Integer, primary_key=True)
-    name = sq.Column(sq.String(length=40), nullable=False, unique=True)
-    language = sq.Column(sq.String(length=40), nullable=False)
-
-
-def create_tables(engine):
-    """
-    Пересооздаёт все таблицы в БД
-    :param engine:
-    :return:
-    """
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-
-
 def get_dsn():
     """
     Получает параметры подлключения к БД из переменных среды
@@ -41,69 +20,90 @@ def get_dsn():
         return None
 
 
-def get_shops_by_pub(session, pub):
+class FrameworkMod(Base):
     """
-    Возвращает множество названий магазинов продающих определённого издателя
-    :param pub: Имя издателя
-    :return: Множество названий магазинов
+    Класс для работы с Издателем
     """
-    q = session.query(
-        Publisher, Book, Stock, Shop
-    ).filter(
-        Publisher.id == Book.id_publisher
-    ).filter(
-        Book.id == Stock.id_book
-    ).filter(
-        Shop.id == Stock.id_shop
-    ).filter(
-        Publisher.name == pub
-    )
+    __tablename__ = "framework"
 
-    result = set()
-    for s in q.all(): result = result.union({s.Shop.name})
-    return result
+    pk = sq.Column(sq.Integer, primary_key=True)
+    name = sq.Column(sq.String(length=40), nullable=False, unique=True)
+    language = sq.Column(sq.String(length=40), nullable=False)
 
 
-def connect_db():
-    DSN = get_dsn()
-    if not DSN:
-        print("""
-Необходимо задать параметры подключения к БД через переменные среды:
-    PSTGRS_DB     - Имя базы данных
-    PSTGRS_USER   - Имя пользователя
-    PSTGRS_PASSWD - Пароль пользователя
-    PSTGRS_HOSTNAME - Имя или адрес хоста
-""")
-        return
-    return sq.create_engine(DSN)
+class RaidSession:
+    """Класс для работы с БД"""
 
-    engine = sq.create_engine(DSN)
-def create_db():
+    def __init__(self, dsn):
+        self.engine = None
+        self.session = None
+        self.dsn = dsn
 
-    engine = connect_db()
-    if not engine: return
-
-    create_tables(engine)
-    engine.dispose()
-
-def fill_db():
-    engine = connect_db()
-    if not engine:
-        return
-
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    list_to_add = []
-
-    list_to_add.append(FrameworkMod(pk=1, name="React", language="Javascript"))
-    list_to_add.append(FrameworkMod(pk=2, name="Vue", language="Javascript"))
-    list_to_add.append(FrameworkMod(pk=3, name="FastApi", language="Python"))
-    list_to_add.append(FrameworkMod(pk=4, name="Laravel", language="PHP"))
-    list_to_add.append(FrameworkMod(pk=5, name="Spring", language="Java"))
+    def create_tables(self):
+        """
+        Пересооздаёт все таблицы в БД
+        :param engine:
+        :return:
+        """
+        Base.metadata.drop_all(self.engine)
+        Base.metadata.create_all(self.engine)
 
 
-    session.add_all(list_to_add)
-    session.commit()
-    session.close()
-    engine.dispose()
+    def connect_db(self):
+        self.engine = sq.create_engine(self.dsn)
+        return self.engine
+
+    def create_session(self):
+        if not self.engine: self.connect_db()
+        if self.engine:
+            Session = sessionmaker(bind=self.engine)
+            self.session = Session()
+        return self.session
+
+    def create_db(self):
+        if not self.connect_db(): return False
+        self.create_tables()
+        self.engine.dispose()
+        self.engine = None
+        return True
+
+    def fill_db(self):
+        if not self.create_session(): return
+
+        list_to_add = []
+
+        list_to_add.append(FrameworkMod(pk=1, name="React", language="Javascript"))
+        list_to_add.append(FrameworkMod(pk=2, name="Vue", language="Javascript"))
+        list_to_add.append(FrameworkMod(pk=3, name="FastApi", language="Python"))
+        list_to_add.append(FrameworkMod(pk=4, name="Laravel", language="PHP"))
+        list_to_add.append(FrameworkMod(pk=5, name="Spring", language="Java"))
+
+        self.session.add_all(list_to_add)
+        self.session.commit()
+
+        self.session.close()
+        self.session = None
+        self.engine.dispose()
+        self.engine = None
+
+
+    def get_frameworks(self):
+        """
+        Возвращает содержимое таблицы framework
+        :param:
+        :return:
+        """
+        if not self.session:
+            self.create_session()
+
+        q = self.session.query(
+            FrameworkMod
+        )
+
+        result = []
+        for s in q.all(): result.append(
+            {"pk": s.pk,
+             "name": s.name,
+             "language": s.language})
+        return result
+
