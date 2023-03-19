@@ -22,7 +22,7 @@ def main():
     create_db()
     fill_db()
 
-    app.run()
+    app.run(port=80)
 
 if __name__ == "__main__":
     main()
