@@ -107,3 +107,24 @@ class RaidSession:
              "language": s.language})
         return result
 
+    def get_frameworks_by_lang(self, lang):
+        """
+        Возвращает содержимое таблицы framework
+        :param:
+        :return:
+        """
+        if not self.session:
+            self.create_session()
+
+        q = self.session.query(
+            FrameworkMod
+        ).filter(
+            FrameworkMod.language == lang
+        )
+
+        result = []
+        for s in q.all(): result.append(
+            {"pk": s.pk,
+             "name": s.name,
+             "language": s.language})
+        return result
