@@ -14,17 +14,18 @@ def page_index():
 @main_blueprint.route('/frameworks')
 def page_frameworks():
     global raid_session
-    if not raid_session:
-        dsn = get_dsn()
-        if not dsn: return """
-    Необходимо задать параметры подключения к БД через переменные среды:
-        PSTGRS_DB     - Имя базы данных
-        PSTGRS_USER   - Имя пользователя
-        PSTGRS_PASSWD - Пароль пользователя
-        PSTGRS_HOSTNAME - Имя или адрес хоста
-"""
-    raid_session = RaidSession(dsn)
+
     fwks = raid_session.get_frameworks()
+    if fwks:
+        return json.dumps(fwks)
+    else:
+        return "Невозможно запросить БД"
+
+@main_blueprint.route('/frameworks/<string:lang>')
+def page_frameworks_by_lang(lang):
+    global raid_session
+
+    fwks = raid_session.get_frameworks_by_lang(lang)
     if fwks:
         return json.dumps(fwks)
     else:

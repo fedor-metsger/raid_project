@@ -8,22 +8,20 @@ app = Flask(__name__)
 app.register_blueprint(views.main_blueprint)
 
 def main():
-#     dsn = get_dsn()
-#     if not dsn:
-#         print("""
-#     Необходимо задать параметры подключения к БД через переменные среды:
-#         PSTGRS_DB     - Имя базы данных
-#         PSTGRS_USER   - Имя пользователя
-#         PSTGRS_PASSWD - Пароль пользователя
-#         PSTGRS_HOSTNAME - Имя или адрес хоста
-# """)
-#         return
-#     rs = RaidSession(dsn)
-#
-#     if rs.create_db():
-#         rs.fill_db()
+    dsn = get_dsn()
+    if not dsn:
+        print("""
+    Необходимо задать параметры подключения к БД через переменные среды:
+        PSTGRS_DB     - Имя базы данных
+        PSTGRS_USER   - Имя пользователя
+        PSTGRS_PASSWD - Пароль пользователя
+        PSTGRS_HOSTNAME - Имя или адрес хоста
+""")
+        return
+    views.raid_session = RaidSession(dsn)
 
-    views.raid_session = None
+#     if views.raid_session.create_db():
+#         views.raid_session.fill_db()
 
     port_num = 10000
     if {"PORT"} <= os.environ.keys():
