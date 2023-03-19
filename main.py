@@ -1,4 +1,5 @@
 
+import os
 from flask import Flask
 from src.views import main_blueprint
 from src.raid_db import get_dsn, create_db as create_db, fill_db as fill_db
@@ -22,7 +23,14 @@ def main():
     create_db()
     fill_db()
 
-    app.run(port=80)
+    port_num = 10000
+    if {"PORT"} <= os.environ.keys():
+        port_num = int(os.environ["PORT"])
+        if port_num >= 1024:
+            print(f"Requested to use port {port_num} by PORT environment variable")
+        else:
+            print(f"Setting port number {port_num} by default")
+    app.run(port=port_num)
 
 if __name__ == "__main__":
     main()
