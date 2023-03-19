@@ -8,5 +8,5 @@ def page_index():
     return "Все работает"
 
 @main_blueprint.route('/frameworks')
-def page_index():
+def page_frameworks():
     return "Frameworks"
